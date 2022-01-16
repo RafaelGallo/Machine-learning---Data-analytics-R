@@ -26,7 +26,7 @@
 
 - Data analytics - Análise Descritiva IBGE
 - Machine learning - Sistema de recomendação de filmes
-- Machine learning aprendizagem não supervisionada - Sistema de recomendação de filmes~com K-Means
+- Machine learning aprendizagem não supervisionada - Sistema de recomendação de filmes com K-Means
 - Machine learning modelo de classificação - Classificação casos de dengue
 - Machine learning modelo de regressão linear - Previsão de vendas
 - Mapa de dados vendas
