@@ -1,0 +1,261 @@
+---
+title: "Projeto K-Means Pokemon"
+author: "Rafael"
+date: "03/03/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Projeto K-Means aplicando o algoritmo de machine learning
+- Neste projeto feito r vamos analisar total de ataque de cada combatente dos pokemon.
+
+```{r cars}
+library(readr)
+library(dplyr)
+
+data <- read_csv("pokemon_data.csv")
+pokemon <- read_csv("pokemon_data.csv")
+head(pokemon)
+```
+# Visualizando os 5 primeiros dados
+```{r}
+head(pokemon)
+```
+
+# Visualizando os 5 últimos dados
+```{r}
+tail(pokemon)
+```
+
+# Visualizando total de linhas e colunas
+```{r}
+dim(pokemon)
+```
+
+```{r}
+pokemon <- pokemon %>% select(6:11)
+head(pokemon)
+```
+
+# Análise de dados
+# Gráfico dos pokemon ataque
+```{r}
+hist(pokemon$Attack, 
+     xlab = "Atack",
+     ylab = "Total",
+     title = "Atack dos pokemon")
+```
+# Gráfico dos pokemon defesa
+```{r}
+hist(pokemon$Defense,
+     xlab = "Defesa",
+     ylab = "Total",
+     title = "Defesa dos pokemon")
+```
+# Gráfico boxplot dos pokemon 
+```{r}
+boxplot(pokemon $Attack,
+        xlab = "Atack",
+        ylab = "Total",
+        title = "Atack dos pokemon")
+```
+
+```{r}
+boxplot(pokemon$Defense,
+        xlab = "Defesa",
+        ylab = "Total",
+        title = "Defesa dos pokemon")
+```
+
+
+```{r}
+plot(pokemon$Attack)
+```
+# Inicialize o total dentro do erro da soma dos quadrados: wss
+
+```{r}
+
+wss <- 0
+
+# Veja de 1 a 15 clusters possíveis
+for (i in 1:15) {
+  # Ajuste o modelo: km.out
+  km.out <- kmeans(pokemon, centers = i, nstart = 20, iter.max = 50)
+  
+  # Salve a soma dos quadrados dentro do cluster
+  wss[i] <- km.out$tot.withinss
+}
+
+# Produza um scree plot
+plot(1:15, wss, type = "b", 
+     xlab = "Número de clusters", 
+     ylab = "Dentro de grupos soma de quadrados")
+```
+
+# Selecione o número de clusters
+```{r}
+k <- 10
+
+# Construir modelo com k clusters: km.out
+km.pokemon <- kmeans(pokemon, centers = k, nstart = 20, iter.max = 50)
+
+# Visualize o modelo resultante
+km.pokemon
+```
+
+# Plot of Defense vs. Speed por associação de cluster
+```{r}
+plot(pokemon[, c("Defense", "Speed")],
+     col = km.pokemon$cluster,
+     main = paste("Agrupamento de Pokémon com", k, "Clusters"),
+     xlab = "Defesa", ylab = "Velocidade")
+```
+
+
+```{r}
+# Ver os meios da coluna
+colMeans(pokemon)
+```
+
+
+```{r}
+# Veja os desvios padrão da coluna
+apply(pokemon, 2, sd)
+```
+
+
+```{r}
+# Dimensionar os dados
+pokemon.scaled <- scale(pokemon)
+
+# Crie um modelo de cluster hierárquico: hclust.pokemon
+hclust.pokemon <- hclust(dist(pokemon.scaled), method = "complete")
+```
+
+# Comparando kmeans() e hclust()
+```{r}
+# Aplique cutree() ao hclust.pokemon: cut.pokemon
+cut.pokemon <- cutree(hclust.pokemon, k = 3)
+
+# Comparar métodos
+table(km.pokemon$cluster, cut.pokemon)
+```
+```{r}
+pokemon
+```
+
+
+# PCA
+- Estamos usando apenas 4 variáveis do conjunto de dados pokemon aqui
+```{r}
+pokemon_pr <- data %>% select(HP, Attack, Defense, Speed)
+glimpse(pokemon_pr)
+summary(pokemon_pr)
+```
+```{r}
+pr.pokemon <- prcomp(x = pokemon_pr, scale = T, center = T)
+summary
+pr.pokemon
+```
+# Resultados do PCA
+
+Os modelos PCA produzem componentes adicionais de diagnóstico e saída:
+
+- Center - o meio da coluna usado para centralizar os dados
+- Scale - a coluna sd usada para dimensionar os dados
+- Rotacao - a direcao dos vetores prin comp em termos das feições/variáveis originais. Essas informações de alguma forma permitem que você defina novos 
+
+Dados em termos dos componentes principais originais.
+- x - o valor de cada observação no conjunto de dados original projetado para os componentes principais
+
+```{r}
+pr.pokemon$center
+
+```
+
+
+```{r}
+pr.pokemon$scale
+
+```
+
+
+```{r}
+pr.pokemon$rotation
+```
+
+
+```{r}
+head(pr.pokemon$x,10)
+```
+# Interpretando biplots (1)
+  - Quais duas variáveis originais têm aproximadamente as mesmas cargas nos dois primeiros componentes principais?
+  - Pontos de Ataque e Vida (HP)
+
+- Quais dois pokémons são os menos semelhantes em termos do segundo componente principal?
+  - 430 e 231 (pontos mais altos e mais baixos)
+  - Posso usar os ids para pesquisar o nome no conjunto de dados original
+
+```{r}
+biplot(pr.pokemon)
+```
+
+# Variação explicada
+```{r}
+# Variabilidade de cada componente principal: pr.var
+pr.var <- pr.pokemon$sdev^2
+
+# Variação explicada por cada componente principal: pve
+pve <- pr.var / sum(pr.var)
+pve
+```
+
+# Visualizar variação explicada
+```{r}
+# Variação do gráfico explicada para cada componente principal
+
+plot(pve, xlab = "Principal Component",
+     ylab = "Proportion of Variance Explained",
+     ylim = c(0, 1), type = "b")
+```
+
+# Plotar proporção cumulativa de variância explicada
+```{r}
+plot(cumsum(pve), xlab = "Principal Component",
+     ylab = "Cumulative Proportion of Variance Explained",
+     ylim = c(0, 1), type = "b")
+```
+
+
+```{r}
+# Média de cada variável
+colMeans(pokemon_pr)
+```
+
+
+```{r}
+# Desvio padrão de cada variável
+apply(pokemon_pr, 2, sd)
+```
+
+
+```{r}
+# Modelo PCA com dimensionamento: pr.with.scaling
+pr.with.scaling <- prcomp(pokemon_pr, scale = T, center = T)
+
+# Modelo PCA sem dimensionamento: pr.without.scaling
+pr.without.scaling <- prcomp(pokemon_pr, scale = F, center = F)
+
+# Cria biplots de ambos para comparação
+biplot(pr.without.scaling)
+```
+
+
+```{r}
+biplot(pr.with.scaling)
+```
